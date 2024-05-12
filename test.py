@@ -25,44 +25,45 @@ def test_hdf5_collector():
     }
 
     with h5py.File("test.h5", "w") as file:
-        collector = HDF5Collector(file, chunk="4KB", max_ram="128KB")
+        collector = HDF5Collector(file, batch_size=2, chunk="4KB")
+        print(collector._ids)  # [0, 1]
 
         for i in range(99):
             a_batch = np.stack((data["demo_0"]["a"][i], data["demo_1"]["a"][i]))
             b_batch = np.stack((data["demo_0"]["b"][i], data["demo_1"]["b"][i]))
-            collector.add_batched("a", a_batch)
-            collector.add_batched("b", b_batch)
+            collector.add("a", a_batch)
+            collector.add("b", b_batch)
 
         collector.reset(np.array([False, True]))
-        print(collector._ids)
+        print(collector._ids)  # [0, 2]
 
         a_batch = np.stack((data["demo_0"]["a"][99], data["demo_2"]["a"][0]))
         b_batch = np.stack((data["demo_0"]["b"][99], data["demo_2"]["b"][0]))
-        collector.add_batched("b", b_batch)
-        collector.add_batched("a", a_batch)
+        collector.add("b", b_batch)
+        collector.add("a", a_batch)
 
         collector.reset(np.array([True, False]))
-        print(collector._ids)
+        print(collector._ids)  # [3, 2]
 
         a_batch = np.stack((data["demo_3"]["a"][0],))
         b_batch = np.stack((data["demo_3"]["b"][0],))
 
-        collector.add_batched("a", a_batch, mask=np.array([False, True]))
-        collector.add_batched("b", b_batch, mask=np.array([False, True]))
+        collector.add("a", a_batch, mask=np.array([True, False]))
+        collector.add("b", b_batch, mask=np.array([True, False]))
 
         for i in range(1, 101):
-            a_batch = np.stack((data["demo_2"]["a"][i], data["demo_3"]["a"][i]))
-            b_batch = np.stack((data["demo_2"]["b"][i], data["demo_3"]["b"][i]))
-            collector.add_batched("a", a_batch)
-            collector.add_batched("b", b_batch)
+            a_batch = np.stack((data["demo_3"]["a"][i], data["demo_2"]["a"][i]))
+            b_batch = np.stack((data["demo_3"]["b"][i], data["demo_2"]["b"][i]))
+            collector.add("a", a_batch)
+            collector.add("b", b_batch)
 
-        collector.reset(np.array([True, False]))
-        print(collector._ids)
+        collector.reset(np.array([False, True]))
+        print(collector._ids)  # [3, 4]
 
         a_batch = np.stack((data["demo_3"]["a"][101],))
         b_batch = np.stack((data["demo_3"]["b"][101],))
-        collector.add_batched("a", a_batch, mask=np.array([False, True]))
-        collector.add_batched("b", b_batch, mask=np.array([False, True]))
+        collector.add("a", a_batch, mask=np.array([True, False]))
+        collector.add("b", b_batch, mask=np.array([True, False]))
 
         collector.reset()
 
